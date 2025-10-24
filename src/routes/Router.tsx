@@ -16,9 +16,9 @@ const Error = Loadable(lazy(() => import('../views/auth/error/Error')));
 
 
 const AuthRoutes = () => {
-  const { user, loading } = useUser();
+  const { user, loading, isLoggingIn } = useUser();
   if (loading) return null;
-  return user ? <Navigate to="/" /> : <Outlet />;
+  return user && !isLoggingIn ? <Navigate to="/" /> : <Outlet />;
 };
 
 const Router = [

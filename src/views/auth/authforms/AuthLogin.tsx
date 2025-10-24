@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Button, Label, TextInput, Alert } from "flowbite-react";
 import { useNavigate } from "react-router";
 import { supabase } from "../../../utils/supabaseClient";
+import { useUser } from "../../../contexts/UserContext";
 
 const AuthLogin = () => {
   const navigate = useNavigate();
+  const { setIsLoggingIn } = useUser();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -21,6 +23,7 @@ const AuthLogin = () => {
     event.preventDefault();
     setError(null);
     setLoading(true);
+    setIsLoggingIn(true);
 
     try {
       const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
@@ -58,6 +61,7 @@ const AuthLogin = () => {
       setError(err.message || "Ocurrió un error al iniciar sesión.");
     } finally {
       setLoading(false);
+      setIsLoggingIn(false);
     }
   };
 
