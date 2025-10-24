@@ -1,11 +1,9 @@
-
-import {  Sidebar } from "flowbite-react";
+import { Sidebar } from "flowbite-react";
 import SidebarContent from "./Sidebaritems";
 import NavItems from "./NavItems";
 import SimpleBar from "simplebar-react";
 import React from "react";
 import FullLogo from "../shared/logo/FullLogo";
-// Remove Upgrade import since we won't use it
 import NavCollapse from "./NavCollapse";
 
 const SidebarLayout = () => {
@@ -16,7 +14,7 @@ const SidebarLayout = () => {
           className="fixed menu-sidebar bg-white dark:bg-darkgray rtl:pe-4 rtl:ps-0 top-[69px]"
           aria-label="Sidebar with multi-level dropdown example"
         >
-          <div className="px-6 py-4 flex items-center sidebarlogo">
+          <div className="px-6 py-4 flex items-center justify-center sidebarlogo">
             <FullLogo />
           </div>
           <SimpleBar className="h-[calc(100vh_-_130px)]">
@@ -30,16 +28,16 @@ const SidebarLayout = () => {
                           {item.heading}
                         </h5>
                         {item.children?.map((child, index) => (
-                        <React.Fragment key={child.id && index}>
-                          {child.children ? (
-                            <div className="collpase-items">
-                              <NavCollapse item={child} />
-                            </div>
-                          ) : (
-                            <NavItems item={child} />
-                          )}
-                        </React.Fragment>
-                      ))}
+                          <React.Fragment key={child.id && index}>
+                            {child.children ? (
+                              <div className="collpase-items">
+                                <NavCollapse item={child} />
+                              </div>
+                            ) : (
+                              <NavItems item={child} />
+                            )}
+                          </React.Fragment>
+                        ))}
                       </React.Fragment>
                     </div>
                   ))}
