@@ -12,6 +12,8 @@ interface UserContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
+  isLoggingIn: boolean;
+  setIsLoggingIn: (isLoggingIn: boolean) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -20,6 +22,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -57,6 +60,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     user,
     profile,
     loading,
+    isLoggingIn,
+    setIsLoggingIn,
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
