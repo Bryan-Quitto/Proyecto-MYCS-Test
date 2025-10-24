@@ -1,58 +1,98 @@
-import { Button, Checkbox, Label, TextInput } from "flowbite-react";
-import { Link, useNavigate } from "react-router";
-
-
+import { useState } from "react";
+import { Button, Label, TextInput, Alert } from "flowbite-react";
+import { useNavigate } from "react-router";
+import { supabase } from "../../../utils/supabaseClient";
 
 const AuthLogin = () => {
   const navigate = useNavigate();
-  const handleSubmit = (event:React.FormEvent<HTMLFormElement>) => {
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    console.log(event);
-     navigate("/");
-  }
+    setError(null);
+    setLoading(true);
+
+    try {
+      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+      });
+
+      if (signInError) {
+        if (signInError.message === "Invalid login credentials") {
+          throw new Error("El correo electrónico o la contraseña son incorrectos.");
+        } else if (signInError.message.includes("Email not confirmed")) {
+          throw new Error("Por favor, verifica tu correo electrónico antes de iniciar sesión.");
+        }
+        throw signInError;
+      }
+
+      if (authData.user) {
+        const { data: profileData, error: profileError } = await supabase
+            .from('perfiles')
+            .select('is_active')
+            .eq('id', authData.user.id)
+            .single();
+
+        if (profileError) throw new Error("No se pudo verificar el estado de la cuenta.");
+
+        if (profileData && !profileData.is_active) {
+            await supabase.auth.signOut();
+            throw new Error("Esta cuenta ha sido desactivada.");
+        }
+      }
+      
+      navigate("/");
+
+    } catch (err: any) {
+      setError(err.message || "Ocurrió un error al iniciar sesión.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
-      <form onSubmit={handleSubmit} >
+      <form onSubmit={handleSubmit}>
+        {error && <Alert color="failure" className="mb-4">{error}</Alert>}
+
         <div className="mb-4">
-          <div className="mb-2 block">
-            <Label htmlFor="Username" value="Username" />
-          </div>
+          <Label htmlFor="email" value="Correo Electrónico" />
           <TextInput
-            id="Username"
-            type="text"
+            id="email"
+            name="email"
+            type="email"
             sizing="md"
             required
-            className="form-control form-rounded-xl"
+            onChange={handleChange}
+            value={formData.email}
           />
         </div>
-        <div className="mb-4">
-          <div className="mb-2 block">
-            <Label htmlFor="userpwd" value="Password" />
-          </div>
+        <div className="mb-6">
+          <Label htmlFor="password" value="Contraseña" />
           <TextInput
-            id="userpwd"
+            id="password"
+            name="password"
             type="password"
             sizing="md"
             required
-            className="form-control form-rounded-xl"
+            onChange={handleChange}
+            value={formData.password}
           />
         </div>
-        <div className="flex justify-between my-5">
-          <div className="flex items-center gap-2">
-            <Checkbox id="accept" className="checkbox" />
-            <Label
-              htmlFor="accept"
-              className="opacity-90 font-normal cursor-pointer"
-            >
-              Remeber this Device
-            </Label>
-          </div>
-          <Link to={"/"} className="text-primary text-sm font-medium">
-            Forgot Password ?
-          </Link>
-        </div>
-        <Button type="submit" color={"primary"}  className="w-full bg-primary text-white rounded-xl">
-          Sign in
+        
+        <Button type="submit" color="primary" className="w-full" disabled={loading}>
+          {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
         </Button>
       </form>
     </>
