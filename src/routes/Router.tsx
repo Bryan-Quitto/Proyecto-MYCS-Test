@@ -7,10 +7,12 @@ import { useUser } from '../contexts/UserContext';
 const FullLayout = Loadable(lazy(() => import('../layouts/full/FullLayout')));
 const BlankLayout = Loadable(lazy(() => import('../layouts/blank/BlankLayout')));
 const Form = Loadable(lazy(() => import("../views/forms/Form")));
-const CreateEvent = Loadable(lazy(() => import("../views/Eventos/CreateEvent"))); // Cambiado
-const ListEvents = Loadable(lazy(() => import("../views/Eventos/ListEvents"))); // Nueva importación
-const UserManagement = Loadable(lazy(() => import("../views/Usuarios/UserManagement"))); // Nueva importación
-const CreateUserPage = Loadable(lazy(() => import("../views/Usuarios/CreateUserPage"))); // Nueva importación
+const CreateEvent = Loadable(lazy(() => import("../views/Eventos/CreateEvent")));
+const ListEvents = Loadable(lazy(() => import("../views/Eventos/ListEvents")));
+const UserManagement = Loadable(lazy(() => import("../views/Usuarios/UserManagement")));
+const CreateUserPage = Loadable(lazy(() => import("../views/Usuarios/CreateUserPage")));
+const Catalogo = Loadable(lazy(() => import('../views/catalogo/Catalogo')));
+const EventoDetalle = Loadable(lazy(() => import('../views/eventoDetalle/EventoDetalle')));
 
 const Dashboard = Loadable(lazy(() => import('../views/dashboards/Dashboard')));
 const MiPerfil = Loadable(lazy(() => import('../views/perfil/MiPerfil')));
@@ -36,11 +38,13 @@ const Router = [
         element: <FullLayout />,
         children: [
           { path: '/', element: <Dashboard /> },
+          { path: '/catalogo', exact: true, element: <Catalogo /> },
+          { path: '/evento/:id', exact: true, element: <EventoDetalle /> },
           { path: '/ui/form', exact: true, element: <Form/> },
-          { path: '/eventos/crear', exact: true, element: <CreateEvent/> },   // Cambiado
-          { path: '/eventos/listar', exact: true, element: <ListEvents/> }, // Nueva ruta
-          { path: '/usuarios/listar', exact: true, element: <UserManagement/> }, // Nueva ruta
-          { path: '/usuarios/crear', exact: true, element: <CreateUserPage/> }, // Nueva ruta
+          { path: '/eventos/crear', exact: true, element: <CreateEvent/> },
+          { path: '/eventos/listar', exact: true, element: <ListEvents/> },
+          { path: '/usuarios/listar', exact: true, element: <UserManagement/> },
+          { path: '/usuarios/crear', exact: true, element: <CreateUserPage/> },
           { path: 'perfil', element: <MiPerfil /> },
         ],
       },
