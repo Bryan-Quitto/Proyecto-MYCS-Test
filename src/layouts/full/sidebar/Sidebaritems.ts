@@ -45,20 +45,46 @@ const SidebarContent: MenuItem[] = [
         roles: ['administrador'], // Solo visible para administradores
         children: [
           {
-            name: "Crear Evento", 
+            name: "Crear Evento",
             icon: "solar:document-add-line-duotone",
             id: uniqueId(),
-            url: "/eventos/crear", 
+            url: "/eventos/crear",
             isPro: false,
-            roles: ['administrador'], 
+            roles: ['administrador'],
           },
           {
-            name: "Listar Eventos", 
-            icon: "solar:list-bold", 
+            name: "Listar Eventos",
+            icon: "solar:list-bold",
             id: uniqueId(),
-            url: "/eventos/listar", 
+            url: "/eventos/listar",
             isPro: false,
-            roles: ['administrador'], 
+            roles: ['administrador'],
+          }
+        ]
+      },
+      {
+        name: "Usuarios",
+        icon: "solar:user-line-duotone",
+        id: uniqueId(),
+        url: "/usuarios",
+        isPro: false,
+        roles: ['administrador'], // Solo visible para administradores
+        children: [
+          {
+            name: "Lista de Usuarios",
+            icon: "solar:list-bold",
+            id: uniqueId(),
+            url: "/usuarios/listar",
+            isPro: false,
+            roles: ['administrador'],
+          },
+          {
+            name: "Crear Usuario",
+            icon: "solar:user-plus-line-duotone",
+            id: uniqueId(),
+            url: "/usuarios/crear",
+            isPro: false,
+            roles: ['administrador'],
           }
         ]
       }
