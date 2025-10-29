@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../utils/supabaseClient';
-import { Table, Dropdown, Modal, Button, Alert } from 'flowbite-react';
+import { Table, Dropdown, Modal, Alert } from 'flowbite-react';
 import EditEventForm from './componentesEventos/EditEventForm';
-import { Evento } from '../../types/eventos'; // Asegúrate que la ruta es correcta
+import { Evento } from '../../types/eventos';
 
 const ListEvents: React.FC = () => {
   const [events, setEvents] = useState<Evento[]>([]);
@@ -11,14 +11,13 @@ const ListEvents: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [selectedEvent, setSelectedEvent] = useState<Evento | null>(null);
 
-  // La lógica para obtener los datos ya es correcta, no necesita cambios.
   const fetchEventsAndResponsables = async () => {
     setLoading(true);
     setError(null);
     try {
       const { data: eventsData, error: eventsError } = await supabase
         .from('Eventos')
-        .select('id, nombre, estado, responsable_id');
+        .select('*, carreras(id, nombre)');
 
       if (eventsError) throw eventsError;
       if (!eventsData || eventsData.length === 0) {
@@ -69,18 +68,16 @@ const ListEvents: React.FC = () => {
     fetchEventsAndResponsables();
   };
 
-  // --- CAMBIO 1: Nueva función genérica para cambiar el estado ---
-  const handleChangeState = async (eventId: number, newState: 'activo' | 'inactivo' | 'borrador') => {
+  const handleChangeState = async (eventId: number, newState: 'publicado' | 'inactivo' | 'borrador') => {
     if (window.confirm(`¿Estás seguro de que quieres cambiar el estado a "${newState}"?`)) {
       try {
         const { error } = await supabase
           .from('Eventos')
-          .update({ estado: newState }) // El nuevo estado es dinámico
+          .update({ estado: newState })
           .eq('id', eventId);
 
         if (error) throw error;
 
-        // Actualiza el estado local para un feedback visual instantáneo
         setEvents(
           events.map(e =>
             e.id === eventId ? { ...e, estado: newState } : e
@@ -93,7 +90,6 @@ const ListEvents: React.FC = () => {
     }
   };
 
-  // --- CAMBIO 3: Función auxiliar para los colores del estado ---
   const getStatusStyle = (estado: string) => {
     switch (estado.toLowerCase()) {
       case 'activo':
@@ -151,16 +147,14 @@ const ListEvents: React.FC = () => {
                   </span>
                 </Table.Cell>
                 <Table.Cell>
-                  {/* --- CAMBIO 2: Lógica condicional en el Dropdown --- */}
                   <Dropdown inline label="Acciones">
                     <Dropdown.Item onClick={() => handleEdit(event)}>
                       Editar
                     </Dropdown.Item>
 
-                    {/* Mostrar solo las opciones de estado diferentes al actual */}
-                    {event.estado !== 'activo' && event.estado !== 'publicado' && (
-                      <Dropdown.Item onClick={() => handleChangeState(event.id, 'activo')}>
-                        Marcar como Activo
+                    {event.estado !== 'publicado' && (
+                      <Dropdown.Item onClick={() => handleChangeState(event.id, 'publicado')}>
+                        Marcar como Publicado
                       </Dropdown.Item>
                     )}
                     {event.estado !== 'inactivo' && (

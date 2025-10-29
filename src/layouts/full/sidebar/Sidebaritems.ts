@@ -9,7 +9,7 @@ export interface ChildItem {
   url?: any;
   color?: string;
   isPro?: boolean;
-  roles?: string[]; // Añadir la propiedad roles aquí
+  roles?: string[];
 }
 
 export interface MenuItem {
@@ -22,7 +22,7 @@ export interface MenuItem {
   children?: ChildItem[];
   url?: any;
   isPro?: boolean;
-  roles?: string[]; // Ya está aquí
+  roles?: string[];
 }
 
 const SidebarContent: MenuItem[] = [
@@ -37,12 +37,19 @@ const SidebarContent: MenuItem[] = [
         isPro: false,
       },
       {
-        name: "Eventos", 
-        icon: "solar:calendar-line-duotone", 
+        name: "Catálogo de Cursos",
+        icon: "solar:book-2-line-duotone",
         id: uniqueId(),
-        url: "/eventos", 
+        url: "/catalogo",
         isPro: false,
-        roles: ['administrador'], // Solo visible para administradores
+      },
+      {
+        name: "Eventos",
+        icon: "solar:calendar-line-duotone",
+        id: uniqueId(),
+        url: "/eventos",
+        isPro: false,
+        roles: ['administrador'],
         children: [
           {
             name: "Crear Evento",
@@ -68,7 +75,7 @@ const SidebarContent: MenuItem[] = [
         id: uniqueId(),
         url: "/usuarios",
         isPro: false,
-        roles: ['administrador'], // Solo visible para administradores
+        roles: ['administrador'],
         children: [
           {
             name: "Lista de Usuarios",
