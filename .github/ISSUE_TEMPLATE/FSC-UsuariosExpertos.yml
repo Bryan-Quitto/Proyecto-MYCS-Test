@@ -14,14 +14,6 @@ body:
         ## Sección 1: Información General y Justificación
 
   - type: input
-    id: titulo-cambio
-    attributes:
-      label: Título Descriptivo del Cambio
-      placeholder: "Ej: Añadir campo de 'avatar' al perfil de usuario"
-    validations:
-      required: true
-
-  - type: input
     id: solicitado-por
     attributes:
       label: Solicitado por (Nombre y Rol)
@@ -69,7 +61,7 @@ body:
   - type: dropdown
     id: tipo-cambio
     attributes:
-      label: Naturaleza del cambio
+      label: Naturaleza del Cambio
       options:
         - Nuevo Requerimiento
         - Cambio a Requisito Existente
