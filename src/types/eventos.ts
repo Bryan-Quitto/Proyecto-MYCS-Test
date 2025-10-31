@@ -15,6 +15,7 @@ export interface Evento {
   nombre: string;
   estado: string;
   descripcion?: string;
+  imagen_url?: string;
   tipo?: 'curso' | 'conferencia' | 'congreso' | 'webinar' | 'socializacion' | 'otro';
   es_pagado: boolean;
   costo?: number;
@@ -25,10 +26,12 @@ export interface Evento {
   responsable?: PerfilSimple | null;
   docente_id?: string;
   docente?: PerfilSimple | null;
+
   fecha_inicio_evento?: string;
   fecha_fin_evento?: string;
   fecha_inicio_inscripcion?: string;
   fecha_fin_inscripcion?: string;
+  
   genera_certificado?: boolean;
   numero_horas?: number;
   nota_aprobacion?: number;
