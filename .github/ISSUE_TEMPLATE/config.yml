@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: ¿Tienes una pregunta general?
-    url: https://github.com/tu-usuario/tu-repositorio/discussions/new?category=q-a
+    url: https://github.com/Bryan-Quito/Proyecto-MYCS-Test/discussions/new?category=q-a
     about: Si tienes dudas que no son solicitudes de cambio.
