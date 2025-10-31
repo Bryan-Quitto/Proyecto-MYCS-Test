@@ -69,7 +69,7 @@ body:
   - type: dropdown
     id: tipo-cambio
     attributes:
-      label: Tipo de Cambio
+      label: Naturaleza del cambio
       options:
         - Nuevo Requerimiento
         - Cambio a Requisito Existente
