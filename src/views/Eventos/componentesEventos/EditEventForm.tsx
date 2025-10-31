@@ -1,29 +1,66 @@
 import React, { useState, useEffect } from 'react';
-import { TextInput, Button, Label, Alert } from 'flowbite-react';
-import { supabase } from '../../../utils/supabaseClient'; // Ajusta la ruta
-import SearchResponsable from './SearchResponsable';
-// PASO CLAVE: Importamos el tipo unificado
-import { Evento } from '../../../types/eventos'; // Ajusta la ruta
+import { TextInput, Button, Label, Alert, Textarea, ToggleSwitch, Select, FileInput } from 'flowbite-react';
+import { supabase } from '../../../utils/supabaseClient';
+import { Evento, PerfilSimple } from '../../../types/eventos';
 
 interface EditEventFormProps {
-  event: Evento; // Espera el tipo Evento correcto y completo
+  event: Evento;
   onClose: () => void;
   onUpdate: () => void;
 }
 
 const EditEventForm: React.FC<EditEventFormProps> = ({ event, onClose, onUpdate }) => {
-  const [nombre, setNombre] = useState(event.nombre);
-  // El ID del responsable es el dato clave que vamos a actualizar
-  const [responsableId, setResponsableId] = useState<string | null>(event.responsable_id);
-  
+  const [formData, setFormData] = useState<Partial<Evento>>(event);
+  const [docentes, setDocentes] = useState<PerfilSimple[]>([]);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(event.imagen_url || null);
+  const [uploadMessage, setUploadMessage] = useState<{ type: 'success' | 'failure'; text: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Sincroniza el estado del formulario si el evento a editar cambia
   useEffect(() => {
-    setNombre(event.nombre);
-    setResponsableId(event.responsable_id);
+    const fetchDocentes = async () => {
+      const { data } = await supabase.from('perfiles').select('id, nombre1, apellido1, cedula');
+      if (data) setDocentes(data as PerfilSimple[]);
+    };
+    fetchDocentes();
+  }, []);
+
+  useEffect(() => {
+    setFormData(event);
+    setImagePreview(event.imagen_url || null);
   }, [event]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        setUploadMessage({ type: 'failure', text: 'Error: Solo se permiten archivos de imagen.' });
+        setImageFile(null);
+        e.target.value = '';
+        return;
+    }
+    
+    setUploadMessage({ type: 'success', text: `Archivo seleccionado: ${file.name}` });
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+  
+    let finalValue: any = value;
+    if (type === 'checkbox') {
+        finalValue = (e.target as HTMLInputElement).checked;
+    } else if (type === 'number') {
+        finalValue = parseFloat(value);
+    } else if (type === 'datetime-local') {
+        finalValue = value ? new Date(value).toISOString() : null;
+    }
+    
+    setFormData(prev => ({ ...prev, [name]: finalValue }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,60 +68,149 @@ const EditEventForm: React.FC<EditEventFormProps> = ({ event, onClose, onUpdate 
     setError(null);
 
     try {
-      const { error: updateError } = await supabase
-        .from('Eventos')
-        .update({
-          nombre: nombre,
-          responsable_id: responsableId, // Enviamos el ID (puede ser el original o el nuevo)
-        })
-        .eq('id', event.id);
+        let finalImageUrl = event.imagen_url;
 
-      if (updateError) throw updateError;
-      
-      onUpdate(); // Llama al padre para que recargue y cierre. ¡Listo!
+        if (imageFile) {
+            const fileExt = imageFile.name.split('.').pop();
+            const filePath = `eventos/${event.id}-${Date.now()}.${fileExt}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('eventos')
+                .upload(filePath, imageFile);
+
+            if (uploadError) throw new Error(`Error al subir imagen: ${uploadError.message}`);
+
+            const { data: publicURLData } = supabase.storage
+                .from('eventos')
+                .getPublicUrl(filePath);
+            
+            finalImageUrl = publicURLData.publicUrl;
+        }
+
+        const { carreras, responsable, docente, ...updateData } = formData;
+
+        const { error: updateError } = await supabase
+            .from('Eventos')
+            .update({ ...updateData, imagen_url: finalImageUrl, updated_at: new Date().toISOString() })
+            .eq('id', event.id);
+
+        if (updateError) throw updateError;
+        
+        onUpdate();
 
     } catch (err: any) {
-      setError(`Error al actualizar: ${err.message}`);
+        setError(`Error al actualizar: ${err.message}`);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   };
 
-  // Obtenemos el nombre del responsable actual para mostrarlo
-  const nombreResponsableActual = event.responsable 
-    ? `${event.responsable.nombre1} ${event.responsable.apellido1}` 
-    : 'Ninguno asignado';
+  const formatDateForInput = (dateString?: string) => {
+    if (!dateString) return '';
+    return new Date(dateString).toISOString().slice(0, 16);
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {error && <Alert color="failure">{error}</Alert>}
+    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {error && <Alert color="failure" className="md:col-span-2">{error}</Alert>}
       
-      <div>
-        <Label htmlFor="nombre" value="Nombre del Curso" />
-        <TextInput
-          id="nombre"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-          required
-        />
+      <div className="md:col-span-2">
+        <Label htmlFor="nombre" value="Nombre del Evento/Curso" />
+        <TextInput id="nombre" name="nombre" value={formData.nombre || ''} onChange={handleChange} required />
       </div>
-      
+
+      <div className="md:col-span-2">
+        <Label htmlFor="descripcion" value="Descripción Detallada" />
+        <Textarea id="descripcion" name="descripcion" value={formData.descripcion || ''} onChange={handleChange} rows={4} />
+      </div>
+
+       <div className="md:col-span-2">
+            <Label htmlFor="file-upload" value="Cambiar Imagen del Evento" />
+            <div className="flex items-center gap-4 mt-1">
+                {imagePreview && <img src={imagePreview} alt="Vista previa" className="h-16 w-16 object-cover rounded" />}
+                <FileInput id="file-upload" accept="image/*" onChange={handleFileChange} className="flex-grow" />
+            </div>
+            {uploadMessage && <Alert color={uploadMessage.type} className="mt-2">{uploadMessage.text}</Alert>}
+        </div>
+
       <div>
-        {/* PASO CLAVE: Mostramos el responsable actual como texto simple */}
-        <Label value="Responsable Actual" />
-        <p className="text-sm p-2 bg-gray-100 rounded mt-1">{nombreResponsableActual}</p>
+        <Label htmlFor="tipo" value="Tipo de Evento" />
+        <Select id="tipo" name="tipo" value={formData.tipo || 'otro'} onChange={handleChange} required>
+          <option value="curso">Curso</option>
+          <option value="conferencia">Conferencia</option>
+          <option value="congreso">Congreso</option>
+          <option value="webinar">Webinar</option>
+          <option value="socializacion">Socialización</option>
+          <option value="otro">Otro</option>
+        </Select>
+      </div>
+      <div>
+        <Label htmlFor="estado" value="Estado del Evento" />
+        <Select id="estado" name="estado" value={formData.estado || 'borrador'} onChange={handleChange} required>
+            <option value="borrador">Borrador (No visible)</option>
+            <option value="publicado">Publicado (Visible)</option>
+        </Select>
       </div>
 
       <div>
-        <Label htmlFor="search-responsable" value="Cambiar Responsable (Opcional)" />
-        <SearchResponsable
-          onSelectResponsable={(id) => setResponsableId(id)}
-        />
+        <Label htmlFor="audiencia" value="Audiencia del Evento" />
+        <Select id="audiencia" name="audiencia" value={formData.audiencia || 'publico_general'} onChange={handleChange} required>
+          <option value="publico_general">Público General</option>
+          <option value="estudiantes_uta">Estudiantes UTA</option>
+          <option value="estudiantes_facultad">Estudiantes Facultad</option>
+          <option value="estudiantes_carrera">Estudiantes Carrera</option>
+        </Select>
+      </div>
+      <div></div>
+
+      <div>
+        <Label htmlFor="fecha_inicio_evento" value="Inicio del Evento" />
+        <TextInput id="fecha_inicio_evento" name="fecha_inicio_evento" type="datetime-local" value={formatDateForInput(formData.fecha_inicio_evento)} onChange={handleChange} />
+      </div>
+      <div>
+        <Label htmlFor="fecha_fin_evento" value="Fin del Evento" />
+        <TextInput id="fecha_fin_evento" name="fecha_fin_evento" type="datetime-local" value={formatDateForInput(formData.fecha_fin_evento)} onChange={handleChange} />
+      </div>
+      <div>
+        <Label htmlFor="fecha_inicio_inscripcion" value="Inicio de Inscripciones" />
+        <TextInput id="fecha_inicio_inscripcion" name="fecha_inicio_inscripcion" type="datetime-local" value={formatDateForInput(formData.fecha_inicio_inscripcion)} onChange={handleChange} />
+      </div>
+      <div>
+        <Label htmlFor="fecha_fin_inscripcion" value="Cierre de Inscripciones" />
+        <TextInput id="fecha_fin_inscripcion" name="fecha_fin_inscripcion" type="datetime-local" value={formatDateForInput(formData.fecha_fin_inscripcion)} onChange={handleChange} />
       </div>
 
-      <div className="flex justify-end gap-2 mt-4">
+      <div className="flex flex-col gap-4 p-4 border rounded-lg">
+        <ToggleSwitch name="es_pagado" label="Es de Pago" checked={formData.es_pagado || false} onChange={(checked) => setFormData(prev => ({...prev, es_pagado: checked, costo: checked ? prev.costo : 0}))} />
+        {formData.es_pagado && (
+            <div>
+                <Label htmlFor="costo" value="Costo ($)" />
+                <TextInput id="costo" name="costo" type="number" min="0" step="0.01" value={formData.costo || 0} onChange={handleChange} />
+            </div>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-4 p-4 border rounded-lg">
+        <ToggleSwitch name="genera_certificado" label="Genera Certificado" checked={formData.genera_certificado || false} onChange={(checked) => setFormData(prev => ({...prev, genera_certificado: checked}))} />
+        <div>
+            <Label htmlFor="numero_horas" value="Número de Horas" />
+            <TextInput id="numero_horas" name="numero_horas" type="number" min="0" value={formData.numero_horas || 0} onChange={handleChange} />
+        </div>
+      </div>
+
+      <div className="md:col-span-2">
+        <Label htmlFor="docente_id" value="Docente Asignado" />
+        <Select id="docente_id" name="docente_id" value={formData.docente_id || ''} onChange={handleChange}>
+            <option value="">-- Sin docente --</option>
+            {docentes.map(d => (
+                <option key={d.id} value={d.id}>{`${d.nombre1} ${d.apellido1} (${d.cedula})`}</option>
+            ))}
+        </Select>
+      </div>
+
+      <div className="md:col-span-2 flex justify-end gap-2 mt-4">
         <Button color="gray" onClick={onClose} disabled={loading}>Cancelar</Button>
-        <Button type="submit" isProcessing={loading}>Actualizar Evento</Button>
+        <Button type="submit" isProcessing={loading}>Guardar Cambios</Button>
       </div>
     </form>
   );
